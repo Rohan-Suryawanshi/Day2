@@ -15,11 +15,11 @@ const uploadToCloudinary = async (localFilePath) => {
     });
     console.log("File is Uploaded Successfully :" + response.url);
 
-    fs.unlinkSync(localFilePath); //Remove the locally saved temporary file
+    fs.unlink(localFilePath); //Remove the locally saved temporary file
 
     return response;
   } catch (error) {
-    fs.unlinkSync(localFilePath); //Remove the locally saved temporary file
+    fs.unlink(localFilePath); //Remove the locally saved temporary file
     return { success: false, message: error.message };
   }
 };

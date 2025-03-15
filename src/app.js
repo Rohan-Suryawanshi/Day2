@@ -16,13 +16,20 @@ app.use(express.static("public"));
 app.use(cookieParser());
 app.use(morgan('dev'));
 
-
 //Routes
 import userRoutes from './routes/user.routes.js';
 
-app.use('/api/v1/users', userRoutes);
 //http://localhost:8000/api/v1/users/register
+app.use('/api/v1/users', userRoutes);
 
+//Error Handling middleware
+app.use((err, req, res, next) => {
+  console.error(" 🥺 Error:", err.message); // Logs the error for debugging
 
+  res.status(err.statusCode || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
 
 export {app};
