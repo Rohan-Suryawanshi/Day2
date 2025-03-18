@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
     },
     coverImage: {
       type: String, //clourinary String
-      required: true,
+      default:" "
     },
     watchHistory: {
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Video" }],

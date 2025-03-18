@@ -24,7 +24,7 @@ app.use('/api/v1/users', userRoutes);
 
 //Error Handling middleware
 app.use((err, req, res, next) => {
-  console.error(" 🥺 Error:", err.message); // Logs the error for debugging
+  console.error(" 🥺 Error:", err.message); // Logs the error for debug
 
   res.status(err.statusCode || 500).json({
     success: false,
