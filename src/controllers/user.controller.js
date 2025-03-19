@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadToCloudinary } from "../utils/Cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import fs from "fs";
+import jwt from "jsonwebtoken";
 
 const deleteLocalFile = (fileName) => {
   if (fs.existsSync(fileName)) {
@@ -166,4 +167,43 @@ const logoutUser = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User Logout Successfully"));
 });
 
-export { registerUser, loginUser, logoutUser };
+const refreshAccessToken = AsyncHandler(async (req, res) => {
+  const token =
+    req.cookies?.accessToken || req.header("Authorization").split(" ")[1];
+  if (!token) {
+    throw new ApiError(401, "Access Token Is required");
+  }
+  try {
+    const decodedToken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+
+    const user = await User.findById(decodedToken._id).select("-password");
+    if (!user) {
+      throw new ApiError(401, "Invalid Access Token");
+    }
+    if (refreshAccessToken !== user?.refreshToken) {
+      throw new ApiError(401, "Refresh Token is expired");
+    }
+    const option = {
+      httpOnly: true,
+      secure: true,
+    };
+    const { newAccessToken, newRefreshToken } =
+      await generateAccessAndRefreshToken(user._id);
+
+    req
+      .status(200)
+      .cookie("accessToken", accessToken, option)
+      .cookie("refreshToken", refreshToken, option)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken: newAccessToken, refreshToken: newRefreshToken },
+          "Access Token Refreshed"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(401, error?.message || "Invalid Access Token");
+  }
+});
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
