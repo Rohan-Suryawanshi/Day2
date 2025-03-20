@@ -295,5 +295,47 @@ const updateAvatarImage = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedUser, "Avatar Updated Successfully"));
 });
 
+const updateCoverImage = AsyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  if (!userId) {
+    throw new ApiError(401, "User is not authenticated");
+  }
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken,changeCurrentUserPassword,getCurrentUser,updateAccountDetails,updateAvatarImage };
+  const coverLocalPath = req.file?.path;
+  if (!coverLocalPath) {
+    throw new ApiError(400, "Avatar image is required");
+  }
+
+  const cover = await uploadToCloudinary(coverLocalPath);
+  if (!cover?.url) {
+    throw new ApiError(500, "Failed to upload avatar image to Cloudinary");
+  }
+
+  // Delete old avatar if exists
+  if (req.user.coverImage) {
+    await destroyImage(req.user.coverImage);
+  }
+
+  // Update user with new avatar URL
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { $set: { cover: cover.url } },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, "Cover Updated Successfully"));
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changeCurrentUserPassword,
+  getCurrentUser,
+  updateAccountDetails,
+  updateAvatarImage,
+  updateCoverImage,
+};
